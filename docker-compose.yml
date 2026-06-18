@@ -1,0 +1,30 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-lms}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-lms}
+      POSTGRES_DB: ${POSTGRES_DB:-lms}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  backend:
+    build: ./backend
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-lms}:${POSTGRES_PASSWORD:-lms}@db:5432/${POSTGRES_DB:-lms}
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+
+  bot:
+    build: ./bot
+    environment:
+      BOT_TOKEN: ${BOT_TOKEN}
+      API_URL: http://backend:8000/api
+    depends_on:
+      - backend
+    restart: on-failure
+
+volumes:
+  postgres_data:
